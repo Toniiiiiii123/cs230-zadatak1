@@ -1,1 +1,50 @@
+server.py
+import socket
+import threading
 
+host = '127.0.0.1'
+ports = [5001, 5002, 5003]
+
+def handle_client(client_socket, endpoint):
+    message = client_socket.recv(1024).decode()
+    print(message)
+    response = f"Received message from endpoint {endpoint}"
+    client_socket.send(response.encode())
+    client_socket.close()
+
+def start_server(port, endpoint):
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind((host, port))
+    server_socket.listen(5)
+    print(f"Server listening on endpoint {endpoint}, port {port}")
+
+    while True:
+        client_socket, address = server_socket.accept()
+        client_thread = threading.Thread(target=handle_client, args=(client_socket, endpoint))
+        client_thread.start()
+
+for i in range(3):
+    server_thread = threading.Thread(target=start_server, args=(ports[i], i + 1))
+    server_thread.start()
+
+
+client.py
+import socket
+import random
+
+host = '127.0.0.1'
+ports = [5001, 5002, 5003]
+
+endpoint = random.randint(1, 3)
+port = ports[endpoint - 1]
+
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect((host, port))
+
+message = f"Hello endpoint {endpoint}"
+client_socket.send(message.encode())
+
+response = client_socket.recv(1024).decode()
+print("Server response:", response)
+
+client_socket.close()
