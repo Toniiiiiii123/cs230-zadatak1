@@ -1,1 +1,76 @@
+server1.py
+import socket
+import os
+import time
+from datetime import datetime
+
+HOST = 'localhost'
+PORT = 65432
+S1_FOLDER = 'S1'
+
+def read_file_content(folder):
+    file_path = os.path.join(folder, 'data.txt')
+    with open(file_path, 'r') as file:
+        return file.read()
+
+def get_file_from_server2():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((HOST, PORT))
+        s.sendall(b'get_file_content')
+        return s.recv(1024).decode()
+
+def create_backup():
+    file_path = os.path.join(S1_FOLDER, 'data.txt')
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    backup_path = os.path.join(S1_FOLDER, f'data_backup_{timestamp}.txt')
+
+    with open(file_path, 'r') as file:
+        data = file.read()
+
+    with open(backup_path, 'w') as file:
+        file.write(data)
+
+while True:
+    server1_file_content = read_file_content(S1_FOLDER)
+    server2_file_content = get_file_from_server2()
+
+    if server1_file_content != server2_file_content:
+        create_backup()
+        print("Data is inconsistent. Backup created.")
+    else:
+        print("Data is consistent.")
+
+    time.sleep(30)
+
+
+
+server2.py
+import socket
+import os
+
+HOST = 'localhost'
+PORT = 65432
+S2_FOLDER = 'S2'
+
+def read_file_content(folder):
+    file_path = os.path.join(folder, 'data.txt')
+    with open(file_path, 'r') as file:
+        return file.read()
+
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.bind((HOST, PORT))
+server.listen()
+
+print("Server 2 is listening for connections...")
+
+while True:
+    conn, addr = server.accept()
+
+    with conn:
+        request = conn.recv(1024).decode()
+
+        if request == 'get_file_content':
+            server2_file_content = read_file_content(S2_FOLDER)
+            conn.sendall(server2_file_content.encode())
+
 
