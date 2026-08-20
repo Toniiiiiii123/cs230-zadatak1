@@ -1,0 +1,13 @@
+def multiply_a_b_(a,b):
+    return a * b
+
+def area_wrapper(func):
+    def wrapper(a,b):
+        if a <= 0 or b <=0:
+            print("greska, brojevi nisu pozitivni")
+        return func(a,b)
+    return wrapper
+
+multiply_a_b_  = area_wrapper(multiply_a_b_)
+print (multiply_a_b_(6,5))
+print (multiply_a_b_(-3,5))
